@@ -1,40 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="favicon
   <meta charset="UTF-8">
   <title>Voice Amount Recorder</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#fff8dc">
   <style>
-    html, body {
+    body {
       margin: 0;
       padding: 0;
-      height: 100%;
-      background-color: #fff8dc;
-      font-family: sans-serif;
+      background-color: #fff8dc; /* Soft yellow */
       display: flex;
       justify-content: center;
       align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
     }
+
     .container {
       background-color: #fffbe6;
       border: 2px solid #f0e68c;
       border-radius: 15px;
       padding: 20px;
       width: 90vmin;
-      height: 90vmin;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      max-width: 600px;
+      max-height: 600px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
     }
+
     h1 {
       margin-top: 0;
     }
+
     button {
       padding: 1em;
       font-size: 1em;
@@ -46,19 +48,21 @@
       color: #333;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #f4b400;
     }
+
     #status {
       margin-top: 1em;
     }
+
     #entries {
       margin-top: 1em;
       text-align: left;
       width: 100%;
-      flex-grow: 1;
-      overflow-y: auto;
     }
+
     .entry {
       margin-bottom: 0.5em;
       padding: 0.5em;
@@ -66,6 +70,7 @@
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
+
     #total {
       font-size: 1.2em;
       margin-top: 1em;
@@ -114,6 +119,7 @@
           entries.push({ amount: number, timestamp });
           localStorage.setItem('voiceEntries', JSON.stringify(entries));
           addEntryToPage(number, timestamp);
+          total += number;
           updateTotal();
         } else {
           document.getElementById('status').textContent += ' (No number detected)';
@@ -151,12 +157,6 @@
         updateTotal();
         document.getElementById('status').textContent = 'Status: Reset';
       }
-    }
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(reg => console.log('Service Worker registered:', reg))
-        .catch(err => console.error('Service Worker registration failed:', err));
     }
   </script>
 </body>
