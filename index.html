@@ -15,9 +15,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#000000">
-  <title>Voice Amount Recorder</title>
+  <title>Enter an Amount</title>
   <style>
-    body {
+   body {
       margin: 0;
       padding: 0;
       background-color: #fff8dc; /* Soft yellow */
@@ -44,9 +44,17 @@
       flex-direction: column;
       align-items: center;
     }
-
     h1 {
       margin-top: 0;
+    }
+
+    input[type="number"] {
+      padding: 1em;
+      font-size: 1em;
+      margin: 0.5em;
+      width: 80%;
+      border: 2px solid #f0e68c;
+      border-radius: 8px;
     }
 
     button {
@@ -92,8 +100,9 @@
 </head>
 <body>
   <div class="container">
-    <h1>Speak an Amount</h1>
-    <button onclick="startListening()">🎤 Start Listening</button>
+    <h1>Enter an Amount</h1>
+    <input type="number" id="amountInput" placeholder="Enter amount" step="0.01" />
+    <button onclick="submitAmount()">➕ Add Amount</button>
     <button onclick="startOver()">🔄 Start Over</button>
     <p id="status">Status: Idle</p>
     <div id="entries"></div>
@@ -113,39 +122,22 @@
       }
     };
 
-    function startListening() {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = 'en-US';
-      recognition.start();
-
-      document.getElementById('status').textContent = 'Listening...';
-
-      recognition.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript;
-        document.getElementById('status').textContent = `Heard: "${spokenText}"`;
-
-        const number = extractNumber(spokenText);
-        if (number !== null) {
-          const now = new Date();
-          const timestamp = now.toLocaleString();
-          entries.push({ amount: number, timestamp });
-          localStorage.setItem('voiceEntries', JSON.stringify(entries));
-          addEntryToPage(number, timestamp);
-          total += number;
-          updateTotal();
-        } else {
-          document.getElementById('status').textContent += ' (No number detected)';
-        }
-      };
-
-      recognition.onerror = (event) => {
-        document.getElementById('status').textContent = `Error: ${event.error}`;
-      };
-    }
-
-    function extractNumber(text) {
-      const match = text.match(/\d+(\.\d+)?/);
-      return match ? parseFloat(match[0]) : null;
+    function submitAmount() {
+      const input = document.getElementById('amountInput');
+      const value = parseFloat(input.value);
+      if (!isNaN(value)) {
+        const now = new Date();
+        const timestamp = now.toLocaleString();
+        entries.push({ amount: value, timestamp });
+        localStorage.setItem('voiceEntries', JSON.stringify(entries));
+        addEntryToPage(value, timestamp);
+        total += value;
+        updateTotal();
+        document.getElementById('status').textContent = `Added: $${value.toFixed(2)}`;
+        input.value = '';
+      } else {
+        document.getElementById('status').textContent = 'Please enter a valid number.';
+      }
     }
 
     function addEntryToPage(amount, timestamp) {
