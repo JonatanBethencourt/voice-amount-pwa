@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Amount Recorder</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="theme-color" content="#fff8dc">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #fff8dc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+    .container {
+      background-color: #fffbe6;
+      border: 2px solid #f0e68c;
+      border-radius: 15px;
+      padding: 20px;
+      width: 90vw;
+      max-width: 400px;
+      height: 90vw;
+      max-height: 600px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    button {
+      padding: 1em;
+      font-size: 1em;
+      margin: 0.5em;
+      width: 80%;
+      border: none;
+      border-radius: 8px;
+      background-color: #f7c948;
+      color: #333;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #f4b400;
+    }
+    #status {
+      margin-top: 1em;
+    }
+    #entries {
+      margin-top: 1em;
+      text-align: left;
+      width: 100%;
+    }
+    .entry {
+      margin-bottom: 0.5em;
+      padding: 0.5em;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    #total {
+      font-size: 1.2em;
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Speak an Amount</h1>
+    <button onclick="startListening()">🎤 Start Listening</button>
+    <button onclick="startOver()">🔄 Start Over</button>
+    <p id="status">Status: Idle</p>
+    <div id="entries"></div>
+    <div id="total">Total: $0</div>
+  </div>
+
+  <script>
+    let total = 0;
+    let entries = [];
+
+    window.onload = () => {
+      const saved = localStorage.getItem('voiceEntries');
+      if (saved) {
+        entries = JSON.parse(saved);
+        entries.forEach(entry => addEntryToPage(entry.amount, entry.timestamp));
+        updateTotal();
+      }
+    };
+
+    function startListening() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.start();
+
+      document.getElementById('status').textContent = 'Listening...';
+
+      recognition.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        document.getElementById('status').textContent = `Heard: "${spokenText}"`;
+
+        const number = extractNumber(spokenText);
+        if (number !== null) {
+          const now = new Date();
+          const timestamp = now.toLocaleString();
+          entries.push({ amount: number, timestamp });
+          localStorage.setItem('voiceEntries', JSON.stringify(entries));
+          addEntryToPage(number, timestamp);
+          total += number;
+          updateTotal();
+        } else {
+          document.getElementById('status').textContent += ' (No number detected)';
+        }
+      };
+
+      recognition.onerror = (event) => {
+        document.getElementById('status').textContent = `Error: ${event.error}`;
+      };
+    }
+
+    function extractNumber(text) {
+      const match = text.match(/\d+(\.\d+)?/);
+      return match ? parseFloat(match[0]) : null;
+    }
+
+    function addEntryToPage(amount, timestamp) {
+      const entryDiv = document.createElement('div');
+      entryDiv.className = 'entry';
+      entryDiv.textContent = `$${amount.toFixed(2)} — ${timestamp}`;
+      document.getElementById('entries').appendChild(entryDiv);
+    }
+
+    function updateTotal() {
+      total = entries.reduce((sum, entry) => sum + entry.amount, 0);
+      document.getElementById('total').textContent = `Total: $${total.toFixed(2)}`;
+    }
+
+    function startOver() {
+      if (confirm('Are you sure you want to start over? This will delete all saved entries.')) {
+        entries = [];
+        total = 0;
+        localStorage.removeItem('voiceEntries');
+        document.getElementById('entries').innerHTML = '';
+        updateTotal();
+        document.getElementById('status').textContent = 'Status: Reset';
+      }
+    }
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker registered:', reg))
+        .catch(err => console.error('Service Worker registration failed:', err));
+    }
+  </script>
+</body>
+</html>
