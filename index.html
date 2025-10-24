@@ -192,7 +192,7 @@
 
     function updateTotal() {
       total = entries.reduce((sum, entry) => sum + entry.amount, 0);
-      document.getElementById('total').textContent = `Total: $${total.toFixed(2)}`;
+      document.getElementById('total').innerHTML = `Total: <strong>$${total.toFixed(2)}</strong>`;
     }
 
     function startOver() {
