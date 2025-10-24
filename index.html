@@ -15,12 +15,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#000000">
-  <title>Enter an Amount</title>
+   <title>Enter an Amount</title>
   <style>
-   body {
+    body {
       margin: 0;
       padding: 0;
-      background-color: #fff8dc; /* Soft yellow */
+      background-color: #fff8dc;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -44,6 +44,7 @@
       flex-direction: column;
       align-items: center;
     }
+
     h1 {
       margin-top: 0;
     }
@@ -77,11 +78,15 @@
       margin-top: 1em;
     }
 
+
     #entries {
       margin-top: 1em;
       text-align: left;
       width: 100%;
+      flex-grow: 1;
+      overflow-y: auto;
     }
+
 
     .entry {
       margin-bottom: 0.5em;
@@ -89,13 +94,35 @@
       background-color: #fff;
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      position: relative;
     }
 
-    #total {
-      font-size: 1.2em;
-      margin-top: 1em;
-      font-weight: bold;
+    .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #ff6666;
+      border: none;
+      border-radius: 5px;
+      padding: 0.3em 0.6em;
+      cursor: pointer;
+      font-size: 0.9em;
     }
+
+ 
+    total {
+      font-size: 1.2em;
+      font-weight: bold;
+      background-color: #fffbe6;
+      padding: 0.5em;
+      width: 100%;
+      position: sticky;
+      bottom: 0;
+      border-top: 2px solid #f0e68c;
+      text-align: center;
+    }
+
   </style>
 </head>
 <body>
@@ -106,7 +133,7 @@
     <button onclick="startOver()">🔄 Start Over</button>
     <p id="status">Status: Idle</p>
     <div id="entries"></div>
-    <div id="total">Total: $0</div>
+    <div id="total"><strong>$0</strong></div>
   </div>
 
   <script>
@@ -117,10 +144,10 @@
       const saved = localStorage.getItem('voiceEntries');
       if (saved) {
         entries = JSON.parse(saved);
-        entries.forEach(entry => addEntryToPage(entry.amount, entry.timestamp));
+        entries.forEach((entry, index) => addEntryToPage(entry.amount, entry.timestamp, index));
         updateTotal();
       }
-    };
+    }
 
     function submitAmount() {
       const input = document.getElementById('amountInput');
@@ -128,9 +155,10 @@
       if (!isNaN(value)) {
         const now = new Date();
         const timestamp = now.toLocaleString();
+        const index = entries.length;
         entries.push({ amount: value, timestamp });
         localStorage.setItem('voiceEntries', JSON.stringify(entries));
-        addEntryToPage(value, timestamp);
+        addEntryToPage(value, timestamp, index);
         total += value;
         updateTotal();
         document.getElementById('status').textContent = `Added: $${value.toFixed(2)}`;
@@ -139,17 +167,39 @@
         document.getElementById('status').textContent = 'Please enter a valid number.';
       }
     }
-
-    function addEntryToPage(amount, timestamp) {
+  
+    
+    function addEntryToPage(amount, timestamp, index) {
       const entryDiv = document.createElement('div');
       entryDiv.className = 'entry';
-      entryDiv.textContent = `$${amount.toFixed(2)} — ${timestamp}`;
+      entryDiv.id = `entry-${index}`;
+
+      entryDiv.innerHTML = `
+        <span>$${amount.toFixed(2)} — ${timestamp}</span>
+        <span style="float:right; cursor:pointer;" onclick="deleteEntry(${index})">🗑️</span>
+      `;
+
       document.getElementById('entries').appendChild(entryDiv);
+    }
+
+
+
+    function deleteEntry(index) {
+      const removed = entries.splice(index, 1)[0];
+      localStorage.setItem('voiceEntries', JSON.stringify(entries));
+      refreshEntries();
+      updateTotal();
+      document.getElementById('status').textContent = `Deleted: $${removed.amount.toFixed(2)}`;
+    }
+
+    function refreshEntries() {
+      document.getElementById('entries').innerHTML = '';
+      entries.forEach((entry, index) => addEntryToPage(entry.amount, entry.timestamp, index));
     }
 
     function updateTotal() {
       total = entries.reduce((sum, entry) => sum + entry.amount, 0);
-      document.getElementById('total').textContent = `Total: $${total.toFixed(2)}`;
+      document.getElementById('total').innerHTML = `Total: <strong>$${total.toFixed(2)}</strong>`;
     }
 
     function startOver() {
@@ -165,3 +215,4 @@
   </script>
 </body>
 </html>
+
